@@ -7,6 +7,8 @@ export type Case = {
   /** Caminho da capa dentro da pasta "public" (sem a barra inicial). */
   cover: string
   summary: L
+  /** Cor do degradê de fundo (ex.: '#ff7a00'). Se vazio, usa a cor principal da capa. */
+  color?: string
   /** Loop curto (mp4/webm) em public/projects/, opcional. Toca no carrossel e na página do case. */
   preview?: string
 }
