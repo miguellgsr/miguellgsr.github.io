@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Route, Routes } from 'react-router'
 import { AboutDrawer } from '@/components/about-drawer'
+import { CustomCursor } from '@/components/custom-cursor'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { SiteHeader } from '@/components/site-header'
 import { CasePage } from '@/pages/case-page'
@@ -28,6 +29,7 @@ function App() {
         </Routes>
       </main>
       <AboutDrawer open={aboutOpen} onClose={closeAbout} />
+      <CustomCursor />
     </>
   )
 }

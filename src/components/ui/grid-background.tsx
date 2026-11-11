@@ -7,13 +7,15 @@ type Props = {
   size?: number
   /** Força da cor e do brilho (1 = padrão). */
   strength?: number
+  /** Opacidade geral do fundo (0 a 1). */
+  opacity?: number
 }
 
 // Fundo em grade: todas as linhas acendem na cor do case, com um halo de
 // brilho que "respira" e um ponto de luz mais forte passeando pela grade.
-export function GridBackground({ color, size = 56, strength = 1 }: Props) {
-  const line = (c: string) =>
-    `linear-gradient(to right, ${c} 1px, transparent 1px), linear-gradient(to bottom, ${c} 1px, transparent 1px)`
+export function GridBackground({ color, size = 56, strength = 1, opacity = 0.3 }: Props) {
+  const line = (c: string, w = 1) =>
+    `linear-gradient(to right, ${c} ${w}px, transparent ${w}px), linear-gradient(to bottom, ${c} ${w}px, transparent ${w}px)`
   const tint = (pct: number) =>
     `color-mix(in oklab, var(--grid-color) calc(${pct}% * var(--grid-k)), transparent)`
   const grid = { backgroundSize: `${size}px ${size}px`, backgroundPosition: 'center top' }
@@ -27,6 +29,7 @@ export function GridBackground({ color, size = 56, strength = 1 }: Props) {
         {
           '--grid-color': color,
           '--grid-k': strength,
+          opacity,
           transition: '--grid-color 900ms ease',
         } as React.CSSProperties
       }
@@ -40,6 +43,8 @@ export function GridBackground({ color, size = 56, strength = 1 }: Props) {
           100% { -webkit-mask-position: 0% 25%;   mask-position: 0% 25%; }
         }
         @media (prefers-reduced-motion: reduce) { .gb-halo, .gb-sweep { animation: none !important; } }
+        /* celular/tablet: tira a camada mais pesada (blur grande) para não travar */
+        @media (max-width: 1023px), (pointer: coarse) { .gb-far { display: none; } }
       `}</style>
 
       {/* linhas na cor do case */}
@@ -47,7 +52,7 @@ export function GridBackground({ color, size = 56, strength = 1 }: Props) {
         className="absolute inset-0"
         style={{
           ...grid,
-          backgroundImage: line(tint(16)),
+          backgroundImage: line(tint(5)),
           maskImage: fade,
           WebkitMaskImage: fade,
         }}
@@ -58,7 +63,7 @@ export function GridBackground({ color, size = 56, strength = 1 }: Props) {
         className="gb-halo absolute inset-0"
         style={{
           ...grid,
-          backgroundImage: line(tint(70)),
+          backgroundImage: line(tint(90), 3),
           filter: 'blur(9px)',
           maskImage: fade,
           WebkitMaskImage: fade,
@@ -68,10 +73,10 @@ export function GridBackground({ color, size = 56, strength = 1 }: Props) {
 
       {/* segunda camada de brilho, ainda mais difusa, em outro ritmo */}
       <div
-        className="gb-halo absolute inset-0"
+        className="gb-halo gb-far absolute inset-0"
         style={{
           ...grid,
-          backgroundImage: line(tint(60)),
+          backgroundImage: line(tint(85), 4),
           filter: 'blur(20px)',
           maskImage: fade,
           WebkitMaskImage: fade,
@@ -84,7 +89,7 @@ export function GridBackground({ color, size = 56, strength = 1 }: Props) {
         className="gb-sweep absolute inset-0"
         style={{
           ...grid,
-          backgroundImage: line(tint(55)),
+          backgroundImage: line(tint(28)),
           maskImage: 'radial-gradient(closest-side, #000 0%, transparent 100%)',
           WebkitMaskImage: 'radial-gradient(closest-side, #000 0%, transparent 100%)',
           maskSize: '65% 90%',

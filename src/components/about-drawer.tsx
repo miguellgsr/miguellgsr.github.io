@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { LangSwitch } from '@/components/site-header'
 import { resume } from '@/data/resume'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -34,10 +35,11 @@ export function AboutDrawer({ open, onClose }: Props) {
         inert={!open}
         aria-label={lang === 'pt' ? 'Sobre' : 'About'}
         className={cn(
-          'absolute right-0 top-0 h-full w-full overflow-y-auto border-l border-border bg-background px-6 pb-16 pt-28 font-display transition-transform duration-500 ease-[cubic-bezier(.2,.9,.1,1)] md:w-1/2 md:px-12',
+          'absolute right-0 top-0 h-full w-full overflow-y-auto border-l border-border bg-background px-6 pb-[max(4rem,env(safe-area-inset-bottom))] pt-[max(6.5rem,calc(env(safe-area-inset-top)+5.5rem))] font-display transition-transform duration-500 ease-[cubic-bezier(.2,.9,.1,1)] md:w-1/2 md:px-12',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
       >
+        <LangSwitch className="-ml-1 mb-4 sm:hidden" />
         <h2 className="text-2xl font-bold tracking-tight">{resume.name}</h2>
         <p className="mt-1 text-sm font-light uppercase tracking-[0.18em] text-muted-foreground">
           {t(resume.role)} · {t(resume.location)}

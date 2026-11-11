@@ -140,8 +140,20 @@
     }
   html {
     @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
     }
 }
 @theme inline {
   --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Cursor personalizado: só aparece em quem usa mouse; no toque nada muda. */
+@media (hover: hover) and (pointer: fine) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
 }
