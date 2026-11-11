@@ -69,13 +69,12 @@ export function SiteHeader({ aboutOpen, onToggleAbout, onCloseAbout }: Props) {
 
   const wrap = useRef<HTMLDivElement>(null)
   const refs = useRef<(HTMLElement | null)[]>([])
-  const [hover, setHover] = useState<number | null>(null)
   const [box, setBox] = useState({ x: 0, w: 0, ready: false })
   const [moving, setMoving] = useState(false)
 
   // 0 = Projetos, 1 = Sobre; sem seleção em páginas de case
   const current = aboutOpen ? 1 : home ? 0 : null
-  const target = hover ?? current
+  const target = current
 
   useLayoutEffect(() => {
     const el = target == null ? null : refs.current[target]
@@ -111,7 +110,6 @@ export function SiteHeader({ aboutOpen, onToggleAbout, onCloseAbout }: Props) {
           <div
             ref={wrap}
             className="relative flex items-center gap-1 sm:gap-2"
-            onMouseLeave={() => setHover(null)}
           >
             <span
               aria-hidden="true"
@@ -133,9 +131,6 @@ export function SiteHeader({ aboutOpen, onToggleAbout, onCloseAbout }: Props) {
               to="/"
               end
               onClick={onCloseAbout}
-              onMouseEnter={() => setHover(0)}
-              onFocus={() => setHover(0)}
-              onBlur={() => setHover(null)}
               className={({ isActive }) => cn(item, 'px-3', isActive && !aboutOpen ? on : off)}
             >
               {pt ? 'Projetos' : 'Projects'}
@@ -146,9 +141,6 @@ export function SiteHeader({ aboutOpen, onToggleAbout, onCloseAbout }: Props) {
               }}
               type="button"
               onClick={onToggleAbout}
-              onMouseEnter={() => setHover(1)}
-              onFocus={() => setHover(1)}
-              onBlur={() => setHover(null)}
               aria-expanded={aboutOpen}
               className={cn(item, 'px-3', aboutOpen ? on : off)}
             >

@@ -133,7 +133,7 @@ const FRAG =
 
 const CSS =
   ".clc-root{position:relative;width:100%;overflow:hidden;isolation:isolate;outline:none;user-select:none;-webkit-user-select:none;font-family:var(--clc-font)}" +
-  ".clc-root:focus-visible{box-shadow:inset 0 0 0 2px var(--clc-ink)}" +
+  ".clc-root:focus,.clc-root:focus-visible{outline:none}" +
   ".clc-glow{position:absolute;inset:-20%;background:radial-gradient(50% 40% at 50% 46%,rgba(255,240,220,.07),transparent 70%);pointer-events:none}" +
   ".clc-grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;pointer-events:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")}" +
   ".clc-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer;touch-action:pan-y}" +
@@ -550,6 +550,11 @@ export default function CurvedLensCarousel({
       kick()
     }
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return
+      // painel Sobre aberto: as setas não mexem no carrossel por trás
+      if (document.querySelector("aside[aria-label]:not([inert])")) return
       if (e.key === "ArrowRight") api.current.go(1)
       else if (e.key === "ArrowLeft") api.current.go(-1)
       else return
@@ -561,7 +566,11 @@ export default function CurvedLensCarousel({
     canvas.addEventListener("pointermove", onMove)
     canvas.addEventListener("pointerup", onUp)
     canvas.addEventListener("pointercancel", onUp)
-    root.addEventListener("keydown", onKey)
+    window.addEventListener("keydown", onKey)
+    // já abre com o foco na página, para as setas funcionarem de primeira
+    try { window.focus(); root.focus({ preventScroll: true }) } catch { /* ignore */ }
+    const grab = () => { try { window.focus() } catch { /* ignore */ } }
+    window.addEventListener("pointermove", grab, { once: true, passive: true })
     reduced.addEventListener("change", onMotion)
 
     const ro = new ResizeObserver((entries) => {
@@ -588,7 +597,8 @@ export default function CurvedLensCarousel({
       canvas.removeEventListener("pointermove", onMove)
       canvas.removeEventListener("pointerup", onUp)
       canvas.removeEventListener("pointercancel", onUp)
-      root.removeEventListener("keydown", onKey)
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("pointermove", grab)
       reduced.removeEventListener("change", onMotion)
       stopVideo()
       for (const v of vids) if (v) { v.removeAttribute("src"); v.load() }

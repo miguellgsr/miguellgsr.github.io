@@ -40,20 +40,35 @@ export function CustomCursor() {
       scale = hit ? 1.35 : 1
       request()
     }
-    const onLeave = () => {
-      el.style.opacity = '0'
+    // Qualquer evento do mouse mantém o V visível e a classe ativa (clique, navegação, troca de tema).
+    const keep = (e: MouseEvent | PointerEvent) => {
+      if ('pointerType' in e && e.pointerType !== 'mouse') return
+      x = e.clientX
+      y = e.clientY
+      if (shown) {
+        html.classList.add('has-custom-cursor')
+        el.style.opacity = '1'
+        request()
+      }
     }
-    const onEnter = () => {
-      if (shown) el.style.opacity = '1'
+    // só esconde quando o mouse realmente sai da janela (não quando um elemento é trocado sob ele)
+    const onOut = (e: MouseEvent) => {
+      if (e.relatedTarget) return
+      const out = e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth - 1 || e.clientY >= window.innerHeight - 1
+      if (out) el.style.opacity = '0'
     }
 
     window.addEventListener('pointermove', onMove, { passive: true })
-    document.addEventListener('pointerleave', onLeave)
-    document.addEventListener('pointerenter', onEnter)
+    for (const t of ['pointerdown', 'pointerup', 'click', 'mousemove', 'mouseover']) {
+      window.addEventListener(t, keep as EventListener, { passive: true, capture: true })
+    }
+    document.documentElement.addEventListener('mouseout', onOut)
     return () => {
       window.removeEventListener('pointermove', onMove)
-      document.removeEventListener('pointerleave', onLeave)
-      document.removeEventListener('pointerenter', onEnter)
+      for (const t of ['pointerdown', 'pointerup', 'click', 'mousemove', 'mouseover']) {
+        window.removeEventListener(t, keep as EventListener, { capture: true })
+      }
+      document.documentElement.removeEventListener('mouseout', onOut)
       html.classList.remove('has-custom-cursor')
       if (raf) cancelAnimationFrame(raf)
     }
