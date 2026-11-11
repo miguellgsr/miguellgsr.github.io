@@ -1,13 +1,27 @@
+import { Route, Routes } from 'react-router'
+import { ScrollToTop } from '@/components/scroll-to-top'
+import { SiteHeader } from '@/components/site-header'
+import { AboutPage } from '@/pages/about-page'
+import { CasePage } from '@/pages/case-page'
+import { ContactPage } from '@/pages/contact-page'
+import { NotFoundPage } from '@/pages/not-found-page'
+import { WorkPage } from '@/pages/work-page'
+
 function App() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-neutral-950 px-6 text-center text-neutral-50">
-      <h1 className="text-5xl font-semibold tracking-tight sm:text-7xl">
-        Miguel Santa Rosa
-      </h1>
-      <p className="text-lg text-neutral-400">
-        Direção de arte e identidade visual — portfólio em construção.
-      </p>
-    </main>
+    <>
+      <ScrollToTop />
+      <SiteHeader />
+      <main className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<WorkPage />} />
+          <Route path="/work/:slug" element={<CasePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+    </>
   )
 }
 
