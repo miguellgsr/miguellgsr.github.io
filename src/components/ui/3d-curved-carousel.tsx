@@ -73,7 +73,7 @@ export function springStep(pos: number, vel: number, target: number, dt: number,
 
 /** Card size in px for a stage of w × h: portrait cards, smaller share of a wide stage. */
 const TOP_SAFE = 76 // espaço reservado para o menu flutuante
-const COPY_H = 96 // altura do bloco título + categoria + respiro
+const COPY_H = 112 // altura do bloco título + categoria + respiro
 
 export function cardSize(w: number, h: number): [number, number] {
   // largura por faixa de tela: celular, tablet e desktop
@@ -147,14 +147,13 @@ const CSS =
   ".clc-line{display:block;overflow:hidden;padding-bottom:.1em}" +
   ".clc-in .clc-ch{transform:none;opacity:1}" +
   ".clc-in .clc-kicker{opacity:.6}" +
-  ".clc-zoom{position:absolute;z-index:5;object-fit:cover;max-width:none;pointer-events:none}" +
-  ".clc-root:has(.clc-zoom) .clc-copy{opacity:0;transition:opacity .25s ease}" +
   ".clc-btn{pointer-events:auto;width:36px;height:36px;display:grid;place-items:center;color:var(--clc-ink);cursor:pointer;background:none;border:0;padding:0;opacity:.7;transition:opacity .25s ease,transform .3s cubic-bezier(.3,1.6,.5,1)}" +
   ".clc-btn:hover{opacity:1}" +
   ".clc-prev:hover{transform:translateX(-3px)}.clc-next:hover{transform:translateX(3px)}" +
   ".clc-btn:focus-visible{outline:2px solid var(--clc-ink);outline-offset:2px}" +
   ".clc-btn svg{width:20px;height:20px}" +
-  "@media (pointer:coarse){.clc-btn{width:48px;height:48px}.clc-name{width:clamp(150px,46vw,300px)}}" +
+  "@media (pointer:coarse){.clc-btn{width:44px;height:44px}.clc-name{width:clamp(150px,46vw,300px)}}" +
+  "@media (max-width:639px){.clc-title{font-size:12px}.clc-kicker{font-size:9.5px;margin-top:6px}.clc-btn svg{width:17px;height:17px}}" +
   ".clc-fallback{position:absolute;left:50%;top:50%;width:min(62vw,360px);aspect-ratio:4/5;transform:translate(-50%,-50%);object-fit:cover;border-radius:14px;max-width:none}" +
   ".clc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}" +
   "@media (prefers-reduced-motion:reduce){.clc-ch{transition:opacity .2s ease;transform:none}}"
@@ -237,7 +236,7 @@ export default function CurvedLensCarousel({
   bend = 0.55,
   background = "#0e0e10",
   ink = "#f3ede4",
-  height = "100svh",
+  height = "100dvh",
   className,
   onChange,
   onSelect,
@@ -257,18 +256,53 @@ export default function CurvedLensCarousel({
   const onSelectRef = React.useRef(onSelect)
   onSelectRef.current = onSelect
   const startRef = React.useRef(startIndex)
-  const [zoom, setZoom] = React.useState(null as null | { i: number; x: number; y: number; w: number; h: number; W: number; H: number })
-  const zoomRef = React.useRef(null as HTMLImageElement | null)
+  const [zooming, setZooming] = React.useState(false)
   const zoomingRef = React.useRef(false)
-  const startZoom = React.useRef((_i: number, _x: number, _y: number, _w: number, _h: number, _W: number, _H: number) => {})
-  startZoom.current = (i, x, y, w, h, W, H) => {
+  const startZoom = React.useRef((_i: number, _x: number, _y: number, _w: number, _h: number) => {})
+  startZoom.current = (i, x, y, w, h) => {
     if (zoomingRef.current) return
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !slidesRef.current[i]) {
+    const sl = slidesRef.current[i]
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !sl) {
       onSelectRef.current?.(i)
       return
     }
     zoomingRef.current = true
-    setZoom({ i, x, y, w, h, W, H })
+    setZooming(true)
+    // overlay no formato do card (retrato), ampliado por escala uniforme até cobrir a tela
+    const r = rootRef.current?.getBoundingClientRect()
+    const left = (r?.left ?? 0) + x
+    const top = (r?.top ?? 0) + y
+    const ov = document.createElement("div")
+    ov.setAttribute("aria-hidden", "true")
+    ov.style.cssText =
+      "position:fixed;z-index:60;pointer-events:none;overflow:hidden;border-radius:14px;will-change:transform,opacity;transform-origin:50% 50%;" +
+      `left:${left}px;top:${top}px;width:${w}px;height:${h}px`
+    const im = document.createElement("img")
+    im.src = sl.image
+    im.alt = ""
+    im.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.12)"
+    ov.appendChild(im)
+    document.body.appendChild(ov)
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const s = Math.max(vw / w, vh / h) * 1.02
+    const dx = vw / 2 - (left + w / 2)
+    const dy = vh / 2 - (top + h / 2)
+    const a = ov.animate(
+      [
+        { transform: "translate(0px,0px) scale(1)" },
+        { transform: `translate(${dx}px,${dy}px) scale(${s})` },
+      ],
+      { duration: 800, easing: "cubic-bezier(.65,0,.2,1)", fill: "forwards" },
+    )
+    a.onfinish = () => {
+      onSelectRef.current?.(i)
+      // a página do case monta por baixo; some o overlay com fade
+      window.setTimeout(() => {
+        const f = ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: "ease", fill: "forwards" })
+        f.onfinish = () => ov.remove()
+      }, 120)
+    }
   }
   const slidesRef = React.useRef(slides)
   slidesRef.current = slides
@@ -378,7 +412,7 @@ export default function CurvedLensCarousel({
       ;[cw, ch] = cardSize(W, H)
       gap = cw * 0.14
       cyPx = centerY(H, ch)
-      root?.style.setProperty("--clc-copy-top", Math.round(cyPx + ch / 2 + 30) + "px")
+      root?.style.setProperty("--clc-copy-top", Math.round(cyPx + ch / 2 + (W < 640 ? 46 : 30)) + "px")
       gl.viewport(0, 0, canvas.width, canvas.height)
       kick()
     }
@@ -502,7 +536,7 @@ export default function CurvedLensCarousel({
         const d = Math.round(dx / step)
         const inY = Math.abs(e.clientY - r.top - cyPx) < ch * 0.6
         if (inY && d === 0 && Math.abs(target - pos) < 0.2) {
-          startZoom.current(current, W / 2 - cw / 2, cyPx - ch / 2, cw, ch, W, H)
+          startZoom.current(current, W / 2 - cw / 2, cyPx - ch / 2, cw, ch)
           return
         }
         if (inY && d !== 0) {
@@ -565,20 +599,6 @@ export default function CurvedLensCarousel({
     }
   }, [n, mediaKey, bend])
 
-  React.useEffect(() => {
-    const el = zoomRef.current
-    if (!zoom || !el) return
-    const a = el.animate(
-      [
-        { left: zoom.x + "px", top: zoom.y + "px", width: zoom.w + "px", height: zoom.h + "px", borderRadius: "14px" },
-        { left: "0px", top: "0px", width: zoom.W + "px", height: zoom.H + "px", borderRadius: "0px" },
-      ],
-      { duration: 800, easing: "cubic-bezier(.65,0,.2,1)", fill: "forwards" },
-    )
-    a.onfinish = () => onSelectRef.current?.(zoom.i)
-    return () => a.cancel()
-  }, [zoom])
-
   const slide = slides[index] ?? slides[0]
   if (!slide) return null
   const vars = { height, background, "--clc-ink": ink, "--clc-font": "'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif" } as React.CSSProperties
@@ -598,8 +618,7 @@ export default function CurvedLensCarousel({
       <canvas ref={canvasRef} className="clc-canvas" aria-hidden="true" />
       {noGL ? <img className="clc-fallback" src={slide.image} alt={slide.alt ?? slide.title} /> : null}
       <div className="clc-grain" aria-hidden="true" />
-      {zoom ? <img ref={zoomRef} className="clc-zoom" src={slides[zoom.i].image} alt="" /> : null}
-      <Copy key={index} slide={slide} shown={shown && !zoom}>
+      <Copy key={index} slide={slide} shown={shown && !zooming}>
         {[
           <button key="p" type="button" className="clc-btn clc-prev" aria-label={prevLabel} onClick={() => api.current.go(-1)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>

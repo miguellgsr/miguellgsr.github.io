@@ -63,6 +63,16 @@ export function WorkPage() {
     setActive(index)
   }, [])
 
+  // Home cabe na tela: sem scroll enquanto estiver aberta.
+  useEffect(() => {
+    const h = document.documentElement
+    const prev = h.style.overflow
+    h.style.overflow = 'hidden'
+    return () => {
+      h.style.overflow = prev
+    }
+  }, [])
+
   // Clicou no card central: abre direto a página final do case.
   const handleSelect = useCallback(
     (index: number) => {
@@ -76,12 +86,12 @@ export function WorkPage() {
   if (!webgl) return <ProjectGrid />
 
   // Espera o tema ser conhecido, para o fundo já nascer na cor certa.
-  if (!resolvedTheme) return <div className="h-svh" />
+  if (!resolvedTheme) return <div className="h-dvh" />
 
   const dark = resolvedTheme === 'dark'
 
   return (
-    <section className="relative h-svh w-full overflow-hidden bg-background">
+    <section className="relative h-dvh w-full overflow-hidden bg-background">
       <GridBackground
         color={colors[active] ?? 'rgb(120, 120, 120)'}
         strength={dark ? 1.2 : 1}
@@ -103,7 +113,7 @@ export function WorkPage() {
           nextLabel={lang === 'pt' ? 'Próximo projeto' : 'Next project'}
           background="transparent"
           ink={dark ? '#f5f5f5' : '#0a0a0a'}
-          height="100svh"
+          height="100dvh"
           startIndex={startIndex}
           onChange={handleChange}
           onSelect={handleSelect}

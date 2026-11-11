@@ -21,7 +21,7 @@ function App() {
         onToggleAbout={toggleAbout}
         onCloseAbout={closeAbout}
       />
-      <main className="min-h-screen">
+      <main className="min-h-svh">
         <Routes>
           <Route path="/" element={<WorkPage />} />
           <Route path="/work/:slug" element={<CasePage />} />
